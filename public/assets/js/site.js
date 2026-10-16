@@ -302,11 +302,160 @@ function initHexmap(root) {
   show(hosts.findIndex((h) => h.host === "10.4.2.19"));
 }
 
+// ───────────────────── Platform preview: token usage ─────────────────────
+
+const USAGE_SOURCES = [
+  { agent: "claude-code",   base: 1.6e6,  weekend: 0.12, hosts: ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "12", "13", "14"].map((n) => `dev-${n}`) },
+  { agent: "opencode",      base: 0.9e6,  weekend: 0.1,  hosts: ["dev-02", "dev-06", "dev-10", "dev-14"] },
+  { agent: "build-bot",     base: 2.2e6,  weekend: 0.45, hosts: [1, 2, 3, 4, 5, 6, 7, 8].map((n) => `ci-runner-0${n}`) },
+  { agent: "review-bot",    base: 0.7e6,  weekend: 0.3,  hosts: ["ci-runner-01", "ci-runner-03", "ci-runner-05", "ci-runner-07"] },
+  { agent: "support-bot",   base: 0.55e6, weekend: 0.6,  hosts: ["support-7f9c", "support-2a1d", "support-b83e", "support-c0f4", "support-91aa", "support-e57b"] },
+  { agent: "claims-triage", base: 0.45e6, weekend: 0.15, hosts: ["claims-api-1", "claims-api-2", "claims-api-3"] },
+  { agent: "intake-bot",    base: 0.06e6, weekend: 0.5,  hosts: ["clinic-edge-01", "clinic-edge-02", "clinic-edge-03"] },
+];
+
+// Seeded, so the sample looks the same on every visit.
+function makeUsage(days) {
+  let s = 0x9e3779b9;
+  const rand = () => {
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  const dates = Array.from({ length: days }, (_, i) => new Date(today.getTime() - (days - 1 - i) * 864e5));
+  const rows = [];
+  dates.forEach((date, d) => {
+    const trend = 0.75 + (0.25 * d) / days;
+    const weekend = date.getDay() % 6 === 0;
+    for (const src of USAGE_SOURCES) for (const host of src.hosts) {
+      const input = Math.round(src.base * trend * (weekend ? src.weekend : 1) * (0.5 + rand()));
+      const output = Math.round(input * (0.02 + rand() * 0.03));
+      rows.push({ d, agent: src.agent, host, input, output, calls: Math.max(1, Math.round(input / 28000)) });
+    }
+  });
+  return { dates, rows };
+}
+
+const fmtTok = (n) => (n >= 1e9 ? `${(n / 1e9).toFixed(2)}B` : n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}k` : String(n));
+const fmtDay = (d) => d.toLocaleDateString("en", { month: "short", day: "numeric" });
+
+function usageDaysSVG(dates, totals, from) {
+  const W = 940, H = 170, L = 44, R = 20, B = 20, T = 8;
+  const n = totals.length;
+  const max = Math.max(...totals, 1);
+  const step = 10 ** Math.floor(Math.log10(max));
+  const top = Math.ceil(max / step) * step;
+  const y = (v) => T + (H - T - B) * (1 - v / top);
+  const slot = (W - L - R) / n;
+  const bw = Math.min(28, slot * 0.68);
+  const grid = [0, top / 2, top].map((v) => `<line class="us-grid" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/>
+    <text x="${L - 8}" y="${y(v) + 3.5}" text-anchor="end" font-size="10" fill="#7c8aa0">${fmtTok(v)}</text>`).join("");
+  const every = n > 14 ? 5 : 1;
+  const bars = totals.map((v, i) => {
+    const x = L + slot * i + (slot - bw) / 2;
+    const date = dates[from + i];
+    const label = (n - 1 - i) % every === 0
+      ? `<text x="${x + bw / 2}" y="${H - 6}" text-anchor="middle" font-size="10" fill="#7c8aa0">${fmtDay(date)}</text>` : "";
+    return `<rect class="us-bar" data-i="${i}" x="${x}" y="${y(v)}" width="${bw}" height="${Math.max(0, y(0) - y(v))}" rx="2"><title>${fmtDay(date)} · ${v.toLocaleString("en")} tokens</title></rect>${label}`;
+  }).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" class="block w-full font-mono" role="img" aria-label="Bar chart of tokens per day">${grid}${bars}</svg>`;
+}
+
+function usageRowHTML(kind, id, value, total, max, pressed) {
+  const pct = (100 * value) / total;
+  return `<li><button type="button" class="us-row" data-kind="${kind}" data-id="${esc(id)}" aria-pressed="${pressed}">
+    <span class="w-28 truncate text-ink-100">${esc(id)}</span>
+    <span class="relative h-1.5 flex-1 overflow-hidden rounded-full bg-ink-800"><span class="absolute inset-y-0 left-0 rounded-full bg-keeper-500" style="width:${((100 * value) / max).toFixed(1)}%"></span></span>
+    <span class="w-12 text-right text-ink-200">${fmtTok(value)}</span>
+    <span class="w-9 text-right text-ink-500">${pct < 1 ? "<1" : Math.round(pct)}%</span>
+  </button></li>`;
+}
+
+function initUsage(root) {
+  const { dates, rows } = makeUsage(30);
+  const days = root.querySelector("[data-usage-days]");
+  const readout = root.querySelector("[data-usage-readout]");
+  let range = 14;
+  let sel = null; // { kind: "agent" | "host", id }
+  let dayTotals = [], dayCalls = [], from = 0;
+
+  const tok = (r) => r.input + r.output;
+  const sumBy = (list, key) => {
+    const m = new Map();
+    for (const r of list) m.set(r[key], (m.get(r[key]) ?? 0) + tok(r));
+    return [...m].sort((a, b) => b[1] - a[1]);
+  };
+
+  function showDay(i) {
+    readout.innerHTML = `<span class="text-ink-500">${fmtDay(dates[from + i])}</span> · <span class="text-ink-50">${dayTotals[i].toLocaleString("en")}</span> tokens · ${dayCalls[i].toLocaleString("en")} calls`;
+    days.querySelectorAll(".us-bar").forEach((b) => b.classList.toggle("is-hover", +b.dataset.i === i));
+  }
+
+  function render() {
+    from = dates.length - range;
+    const inRange = rows.filter((r) => r.d >= from);
+    const shown = sel ? inRange.filter((r) => r[sel.kind] === sel.id) : inRange;
+
+    const input = shown.reduce((a, r) => a + r.input, 0);
+    const output = shown.reduce((a, r) => a + r.output, 0);
+    const calls = shown.reduce((a, r) => a + r.calls, 0);
+    root.querySelector("[data-usage-stats]").innerHTML = `
+      <span><span class="text-ink-50">${fmtTok(input + output)}</span> tokens</span>
+      <span><span class="text-ink-50">${fmtTok(input)}</span> sent</span>
+      <span><span class="text-ink-50">${fmtTok(output)}</span> received</span>
+      <span><span class="text-ink-50">${calls.toLocaleString("en")}</span> calls</span>
+      <span><span class="text-ink-50">${fmtTok((input + output) / range)}</span> / day</span>
+      ${sel ? `<button type="button" class="agent-chip ml-auto" data-clear aria-pressed="true">${sel.kind}: ${esc(sel.id)} ✕</button>` : ""}`;
+
+    dayTotals = Array(range).fill(0);
+    dayCalls = Array(range).fill(0);
+    for (const r of shown) { dayTotals[r.d - from] += tok(r); dayCalls[r.d - from] += r.calls; }
+    days.innerHTML = usageDaysSVG(dates, dayTotals, from);
+    showDay(range - 1);
+
+    // Each list is cross-filtered by a selection in the other one.
+    const agentRows = sel?.kind === "host" ? shown : inRange;
+    const agents = sumBy(agentRows, "agent");
+    const agentTotal = agents.reduce((a, [, v]) => a + v, 0);
+    root.querySelector("[data-usage-agents]").innerHTML = agents
+      .map(([id, v]) => usageRowHTML("agent", id, v, agentTotal, agents[0][1], sel?.kind === "agent" && sel.id === id)).join("");
+
+    const hostRows = sel?.kind === "agent" ? shown : inRange;
+    const hosts = sumBy(hostRows, "host");
+    const hostTotal = hosts.reduce((a, [, v]) => a + v, 0);
+    const top = hosts.slice(0, 9);
+    const rest = hosts.slice(9);
+    root.querySelector("[data-usage-hosts]").innerHTML = top
+      .map(([id, v]) => usageRowHTML("host", id, v, hostTotal, hosts[0][1], sel?.kind === "host" && sel.id === id)).join("")
+      + (rest.length ? `<li class="px-2 py-1 text-ink-500">+ ${rest.length} more hosts · ${fmtTok(rest.reduce((a, [, v]) => a + v, 0))}</li>` : "");
+  }
+
+  root.addEventListener("click", (e) => {
+    const row = e.target.closest(".us-row");
+    const chip = e.target.closest("[data-range]");
+    if (row) sel = sel?.kind === row.dataset.kind && sel.id === row.dataset.id ? null : { kind: row.dataset.kind, id: row.dataset.id };
+    else if (e.target.closest("[data-clear]")) sel = null;
+    else if (chip) {
+      range = +chip.dataset.range;
+      root.querySelectorAll("[data-range]").forEach((c) => c.setAttribute("aria-pressed", String(c === chip)));
+    } else return;
+    render();
+  });
+  days.addEventListener("mouseover", (e) => { const b = e.target.closest(".us-bar"); if (b) showDay(+b.dataset.i); });
+  days.addEventListener("mouseleave", () => showDay(range - 1));
+  render();
+}
+
 document.addEventListener("htmx:afterSettle", (e) => {
   const live = e.detail.target.querySelector("[data-live-records]");
   if (live) initLiveRecords(live);
   const hexmap = e.detail.target.querySelector("[data-hexmap]");
   if (hexmap) initHexmap(hexmap);
+  const usage = e.detail.target.querySelector("[data-usage]");
+  if (usage) initUsage(usage);
   if (reducedMotion) e.detail.target.querySelectorAll(".map-flow").forEach((g) => g.remove());
 });
 

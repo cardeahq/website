@@ -1,0 +1,35 @@
+<div class="flex h-full flex-col" data-usage>
+  <div class="flex items-center justify-between gap-4 border-b border-ink-800 px-5 py-3">
+    <div>
+      <h3 class="text-sm font-semibold text-ink-50">Usage</h3>
+      <p class="font-mono text-[11px] whitespace-nowrap text-ink-500">tokens through all gateways · per day, agent and source host</p>
+    </div>
+    <div class="flex items-center gap-1.5 font-mono text-[11px] whitespace-nowrap">
+      <span class="text-ink-500">range</span>
+      <button type="button" class="agent-chip" data-range="7" aria-pressed="false">7 days</button>
+      <button type="button" class="agent-chip" data-range="14" aria-pressed="true">14 days</button>
+      <button type="button" class="agent-chip" data-range="30" aria-pressed="false">30 days</button>
+    </div>
+  </div>
+
+  <div data-usage-stats class="flex items-center gap-6 border-b border-ink-800 px-5 py-2.5 font-mono text-[11px] text-ink-400"></div>
+
+  <div class="border-b border-ink-800 px-5 pt-3 pb-2">
+    <div class="flex items-center justify-between font-mono text-[11px]">
+      <p class="text-[10px] tracking-widest text-ink-500 uppercase">tokens per day</p>
+      <p data-usage-readout class="text-ink-300"></p>
+    </div>
+    <div data-usage-days class="mt-1"></div>
+  </div>
+
+  <div class="grid flex-1 grid-cols-2 font-mono text-[11px]">
+    <div class="border-r border-ink-800 px-3 py-3">
+      <p class="px-2 text-[10px] tracking-widest text-ink-500 uppercase">per agent</p>
+      <ul data-usage-agents class="mt-2 space-y-0.5"></ul>
+    </div>
+    <div class="px-3 py-3">
+      <p class="px-2 text-[10px] tracking-widest text-ink-500 uppercase">per source host</p>
+      <ul data-usage-hosts class="mt-2 space-y-0.5"></ul>
+    </div>
+  </div>
+</div>
