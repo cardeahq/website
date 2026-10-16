@@ -344,6 +344,13 @@ svg [stroke="#1fae9c" i] { stroke: var(--color-keeper-500); }
 .hx-lbl { fill: var(--hx-lbl); pointer-events: none; }
 .hx-cell:hover .hx-lbl { fill: var(--color-ink-50); }
 
+/* Token usage */
+.us-row { @apply flex w-full items-center gap-3 rounded px-2 py-1 text-left transition-colors hover:bg-ink-850; }
+.us-row[aria-pressed="true"] { @apply bg-keeper-900/40; box-shadow: inset 2px 0 0 var(--color-keeper-400); }
+.us-bar { fill: var(--color-keeper-500); cursor: default; transition: fill 120ms; }
+.us-bar.is-hover { fill: var(--color-keeper-300); }
+.us-grid { stroke: var(--color-ink-800); stroke-width: 1; }
+
 /* Hero flow diagram */
 .fl-cell rect { fill: transparent; stroke: transparent; transition: fill 150ms, stroke 150ms; }
 .fl-cell .fl-x { fill: transparent; pointer-events: none; }

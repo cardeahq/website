@@ -911,8 +911,9 @@
             </div>
             <p class="text-lg/8 text-ink-300 text-pretty">
               The optional platform collects records from all your gateways. It
-              shows a live feed of allowed and denied calls and a map of every
-              host and agent your gateways have seen. It is hosted in the EU.
+              shows a live feed of allowed and denied calls, a map of every
+              host and agent your gateways have seen, and token usage per
+              agent, host and day. It is hosted in the EU.
             </p>
           </div>
         </div>
@@ -994,6 +995,16 @@
                           class="size-1.5 rounded-full bg-keeper-400"
                         ></span>
                         Agent map
+                      </button>
+                      <button
+                        role="tab"
+                        aria-selected="false"
+                        class="app-nav"
+                        hx-get="partials/app-usage.html"
+                        hx-target="#app-view"
+                      >
+                        <span class="size-1.5 rounded-full bg-ink-400"></span>
+                        Usage
                       </button>
                     </nav>
                     <p
