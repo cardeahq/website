@@ -58,12 +58,12 @@
   --color-ink-200: #dde3ea;
   --color-ink-100: #eef2f6;
 
-  /* Brand teal, from the shield. */
-  --color-keeper-300: #7ee8d8;
-  --color-keeper-400: #2dd4bf;
-  --color-keeper-500: #1fae9c;
-  --color-keeper-700: #17766c;
-  --color-keeper-900: #134e4a;
+  /* Brand indigo, from the mark. */
+  --color-keeper-300: #c7c2fb;
+  --color-keeper-400: #9089f8;
+  --color-keeper-500: #6059f7;
+  --color-keeper-700: #4038c4;
+  --color-keeper-900: #251f7a;
 
   /* Signal colours, used sparingly for allow / deny / alert. */
   --color-allow: #4ade80;
@@ -221,11 +221,11 @@
     --color-ink-850: #eff3f7;
     --color-ink-900: #ffffff;
     --color-ink-950: #f5f7fa;
-    --color-keeper-300: #0f766e;
-    --color-keeper-400: #0d9488;
-    --color-keeper-500: #14b8a6;
-    --color-keeper-700: #5eead4;
-    --color-keeper-900: #ccfbf1;
+    --color-keeper-300: #1e2a78;
+    --color-keeper-400: #3346c8;
+    --color-keeper-500: #4f63f0;
+    --color-keeper-700: #8d9cf6;
+    --color-keeper-900: #c9d1fb;
     --color-allow: #15803d;
     --color-deny: #dc2626;
     --color-alert: #b45309;
@@ -251,11 +251,11 @@
   --color-ink-850: #eff3f7;
   --color-ink-900: #ffffff;
   --color-ink-950: #f5f7fa;
-  --color-keeper-300: #0f766e;
-  --color-keeper-400: #0d9488;
-  --color-keeper-500: #14b8a6;
-  --color-keeper-700: #5eead4;
-  --color-keeper-900: #ccfbf1;
+  --color-keeper-300: #1e2a78;
+  --color-keeper-400: #3346c8;
+  --color-keeper-500: #4f63f0;
+  --color-keeper-700: #8d9cf6;
+  --color-keeper-900: #c9d1fb;
   --color-allow: #15803d;
   --color-deny: #dc2626;
   --color-alert: #b45309;
