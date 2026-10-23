@@ -351,16 +351,5 @@ svg [stroke="#1fae9c" i] { stroke: var(--color-keeper-500); }
 .us-bar.is-hover { fill: var(--color-keeper-300); }
 .us-grid { stroke: var(--color-ink-800); stroke-width: 1; }
 
-/* Hero flow diagram */
-.fl-cell rect { fill: transparent; stroke: transparent; transition: fill 150ms, stroke 150ms; }
-.fl-cell .fl-x { fill: transparent; pointer-events: none; }
-.fl-cell.deny rect { fill: var(--color-deny-bg); stroke: var(--color-deny); }
-.fl-cell.deny .fl-x { fill: var(--color-deny-soft); }
-.fl-node rect { transition: stroke 200ms, fill 200ms; }
-.fl-node.is-active rect { stroke: var(--color-keeper-400) !important; }
-#fl-flag { transition: opacity 200ms; }
-.fl-die { animation: fl-die 1.2s ease-out forwards; }
-@keyframes fl-die { 0%, 40% { opacity: 1; } 100% { opacity: 0; } }
-
 /* Code panels scroll inside themselves instead of widening the page. */
 .panel { min-width: 0; }
